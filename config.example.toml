@@ -1,5 +1,8 @@
 # 配置文件示例
 title = 'example config'
+[log]
+debug = false
+file_name = 'jiandaoyun_push_tool'
 
 [database]
 # 支持 oracle 或 mssql
@@ -11,6 +14,7 @@ driver = 'oracle'
     database_name = "TESTDB"
     username = "SYSTEM"
     password = "P@ssw0rd"
+    nls_lang = 'SIMPLIFIED CHINESE_CHINA.UTF8'
     queue_name = "jdy_push_msg_q"
     message_type_name = "jdy_push_msg"
 

@@ -1,2 +1,2 @@
 from .jiandaoyun import JianDaoYun
-from .wechat import WeChat
+from .wechat import WeChatAgent

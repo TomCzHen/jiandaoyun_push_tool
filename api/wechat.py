@@ -81,12 +81,6 @@ class WeChat(API):
     def corp_id(self):
         return self._corp_id
 
-    @classmethod
-    def create_agent(cls, corp_id, agent_id, agent_secret):
-        api = cls(corp_id)
-        agent = WeChatAgent(agent_id, agent_secret, api)
-        return agent
-
     def get_access_token(self, secret):
         method = 'GET'
         params = {"corpid": self.corp_id, "corpsecret": secret}
@@ -134,30 +128,26 @@ class WeChat(API):
         return response
 
 
-class WeChatAgent:
-    def __init__(self, agent_id, agent_secret, api: WeChat):
-        self._api = api
-        self._id = agent_id
-        self._secret = agent_secret
+class WeChatAgent(WeChat):
+    def __init__(self, corp_id, agent_id, agent_secret):
+        self._agent_id = agent_id
+        self._agent_secret = agent_secret
+        super().__init__(corp_id)
 
     @property
-    def id(self):
-        return self._id
+    def agent_id(self):
+        return self._agent_id
 
     @property
-    def secret(self):
-        return self._secret
-
-    @property
-    def api(self):
-        return self._api
+    def agent_secret(self):
+        return self._agent_secret
 
     @property
     def access_token(self):
-        key = f'{self.api.corp_id}-{self.id}-token'
+        key = f'{self.corp_id}-{self.agent_id}-token'
         token = cache.get(key)
         if not token:
-            response = self.api.get_access_token(self.secret)
+            response = self.get_access_token(self.agent_secret)
             token = response.json().get('access_token')
             expire = response.json().get('expires_in') - 30
             cache.set(key=key, value=token, expire=expire)
