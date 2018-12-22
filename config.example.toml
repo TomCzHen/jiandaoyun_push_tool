@@ -1,0 +1,52 @@
+# 配置文件示例
+title = 'example config'
+
+[database]
+# 支持 oracle 或 mssql
+driver = 'oracle'
+
+    [database.oracle]
+    host = "127.0.0.1"
+    port = 1521
+    database_name = "TESTDB"
+    username = "SYSTEM"
+    password = "P@ssw0rd"
+    queue_name = "jdy_push_msg_q"
+    message_type_name = "jdy_push_msg"
+
+    [database.mssql]
+    host = "127.0.0.1"
+    port = "1433"
+    username = "sa"
+    password = "P@ssw0rd"
+    database_name = 'queue_demo'
+    queue_name = "JDYPushMessageQueue"
+    service_name = "JDYPushService"
+    contract_name = "JDYPushMessageContract"
+    message_type_name = "JDYPushMessage"
+
+[jian_dao_yun]
+# 简道云 API KEY
+api_key = "jian_dao_yun_api_key"
+
+    [jian_dao_yun.data_safe_limit]
+    # 1-10
+    create = 10
+    update = 10
+    delete = 10
+
+[sync]
+    # 同步表
+    enable = true
+    # 单位：分钟，最小间隔 10
+    interval = 30
+    [sync.tables]
+    departments = 'JDY_SYNC_DEPARTMENTS'
+    users = 'JDY_SYNC_USERS'
+
+[wechat]
+corp_id = "wechat_corp_id"
+agent_id = 999999
+agent_secret = "wechat_agent_secret"
+# 接收推送的部门 id
+party_id = 999

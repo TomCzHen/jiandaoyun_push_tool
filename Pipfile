@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+toml = "*"
+sqlalchemy = "*"
+diskcache = "*"
+cx-oracle = "*"
+requests = "*"
+ratelimiter = "*"
+marshmallow = "*"
+pyodbc = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
