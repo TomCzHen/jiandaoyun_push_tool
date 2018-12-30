@@ -1,7 +1,5 @@
 import requests
-from diskcache import Cache
-
-cache = Cache('.cache/api')
+from cache import api_cache as cache
 
 
 class APIException(Exception):

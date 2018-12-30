@@ -1,22 +1,22 @@
 # 配置文件示例
 title = 'example config'
+db_driver = 'oracle' # oracle or mssql
+
 [log]
+
 debug = false
-file_name = 'jiandaoyun_push_tool'
+file_name = 'jiandaoyun_push_tool.log'
 
 [database]
-# 支持 oracle 或 mssql
-driver = 'oracle'
-
     [database.oracle]
     host = "127.0.0.1"
     port = 1521
     database_name = "TESTDB"
     username = "SYSTEM"
     password = "P@ssw0rd"
+
+    ld_library_path = 'D:\Oracle\client\12_2'
     nls_lang = 'SIMPLIFIED CHINESE_CHINA.UTF8'
-    queue_name = "jdy_push_msg_q"
-    message_type_name = "jdy_push_msg"
 
     [database.mssql]
     host = "127.0.0.1"
@@ -24,13 +24,19 @@ driver = 'oracle'
     username = "sa"
     password = "P@ssw0rd"
     database_name = 'queue_demo'
-    queue_name = "JDYPushMessageQueue"
-    service_name = "JDYPushService"
-    contract_name = "JDYPushMessageContract"
-    message_type_name = "JDYPushMessage"
+
+[queue]
+    [queue.oracle]
+        name = "jdy_push_msg_q"
+        message_type = "jdy_push_msg"
+
+    [queue.mssql]
+        name = "JDYPushQueue"
+        message_type = "JDYPushMessage"
+        service = "JDYPushService"
+        contract = "JDYPushMessageContract"
 
 [jian_dao_yun]
-# 简道云 API KEY
 api_key = "jian_dao_yun_api_key"
 
     [jian_dao_yun.data_safe_limit]
@@ -40,13 +46,9 @@ api_key = "jian_dao_yun_api_key"
     delete = 10
 
 [sync]
-    # 同步表
-    enable = true
-    # 单位：分钟，最小间隔 10
-    interval = 30
-    [sync.tables]
-    departments = 'JDY_SYNC_DEPARTMENTS'
-    users = 'JDY_SYNC_USERS'
+departments_table = 'JDY_SYNC_DEPARTMENTS'
+users_table = 'JDY_SYNC_USERS'
+relationship_table = 'JDY_SYNC_USERS_DEPTS'
 
 [wechat]
 corp_id = "wechat_corp_id"

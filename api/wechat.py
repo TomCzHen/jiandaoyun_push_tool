@@ -1,4 +1,5 @@
 from .core import API, APIException, cache
+from ratelimiter import RateLimiter
 
 
 class SystemBusyException(APIException):
@@ -126,6 +127,12 @@ class WeChat(API):
         }
         response = self._request(method=method, path=path, data=data, params=params)
         return response
+
+    @RateLimiter(max_calls=5, period=1)
+    def _request(self, method: str = 'GET', headers: dict = None, path: str = '', params=None, data: dict = None,
+                 files=None, timeout=10):
+        super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
+                         timeout=timeout)
 
 
 class WeChatAgent(WeChat):

@@ -1,5 +1,6 @@
 from requests import Response
 from requests.exceptions import HTTPError
+from ratelimiter import RateLimiter
 from .core import API, APIException
 
 
@@ -61,15 +62,15 @@ API_EXCEPTIONS = {
 
 
 class JianDaoYun(API):
-    def __init__(self, api_key: str):
-        self._api_key = api_key
+    def __init__(self, **kwargs):
+        self._api_key = kwargs['api_key']
         super().__init__(scheme='https', host='www.jiandaoyun.com', base_path='api/v1')
 
     @property
     def api_key(self):
         return self._api_key
 
-    def fetch_form_widgets(self, app_id: str, entry_id: str) -> requests.Response:
+    def fetch_form_widgets(self, app_id: str, entry_id: str) -> Response:
         assert app_id != ''
         assert entry_id != ''
         """
@@ -227,3 +228,9 @@ class JianDaoYun(API):
                 raise exception
             else:
                 raise error
+
+    @RateLimiter(max_calls=5, period=1)
+    def _request(self, method: str = 'GET', headers: dict = None, path: str = '', params=None, data: dict = None,
+                 files=None, timeout=10):
+        super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
+                         timeout=timeout)

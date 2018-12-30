@@ -1,121 +1,99 @@
-import toml
-import argparse
 import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
 from time import sleep
-from diskcache import Cache
 from log import logger
+from pathlib import Path
+from sqlalchemy import create_engine
+from config import BASE_DIR, db_driver, config_title, log_config, database_config, api_config, queue_config
 from api import JianDaoYun, WeChatAgent
-from formdata import FormData
-from database_queue import Queue, QueueMessage, OracleQueue, MssqlQueue
-
-queue_cache = Cache('.cache/queue')
-form_data_cache = Cache('.cache/form_data')
+from database_queue import Queue, OracleQueue, MssqlQueue
+from queue_consumer import Consumer as QueueConsumer
+from args import args as run_args
 
 
-class QueueMessageHandler:
-    def __init__(self, api: JianDaoYun):
-        self._api = api
-
-    def create_form_data(self, message: QueueMessage):
-        app_id = message.payload['app_id']
-        entry_id = message.payload['entry_id']
-        widgets = self._get_from_data_widgets(app_id=app_id, entry_id=entry_id)
-        form_data = FormData.create_form_data(widgets=widgets, payload=message.payload)
-
-        return form_data
-
-    def _get_from_data_widgets(self, app_id: str, entry_id: str) -> list:
-        widgets = queue_cache.get(f'{app_id}-{entry_id}', None)
-        if not widgets:
-            widgets = self._api.fetch_form_widgets(app_id=app_id, entry_id=entry_id)
-        return widgets
+def init_contacts_sync(config: dict):
+    pass
 
 
-class FormDataHandler:
-    def __init__(self, api: JianDaoYun):
-        self._api = api
+def init_db_engine(config: dict):
+    logger.debug(f'数据库配置 : {config}')
+    logger.info('初始化数据库连接')
+    uri_formats = {
+        'oracle': 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}',
+        'mssql': 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'
+    }
 
-    def handle_form_data(self, form_data: FormData):
-        pass
+    _config: dict = config[db_driver]
 
+    if db_driver.lower() == 'oracle':
+        os.environ['NLS_LANG'] = _config.get('nls_lang')
+        os.environ['LD_LIBRARY_PATH'] = _config.get('ld_library_path')
 
-class QueueConsumer:
-    def __init__(self, queue: Queue, api: JianDaoYun):
-        self._queue = queue
-        self._api = api
-        self._queue_message_handler = QueueMessageHandler(self._api)
-        self._form_data_handler = FormDataHandler(self._api)
-
-    def get_message(self) -> QueueMessage:
-        message = queue_cache.get('message')
-        if not message:
-            message = self._queue.dequeue_message()
-            queue_cache.set('message', message)
-        return message
-
-    def start(self):
-        while True:
-            message = self.get_message()
-            if message:
-                form_data = self._queue_message_handler.create_form_data(message)
-                self._form_data_handler.handle_form_data(form_data)
+    uri = uri_formats[db_driver.lower()].format(**_config)
+    engine = create_engine(uri)
+    return engine
 
 
-def init_log(config: dict):
-    parser = argparse.ArgumentParser(description='Jian Dao Yun Message Consumer')
-    parser.add_argument('--debug', help='enable debug mode', action="store_true")
-    args = parser.parse_args()
-    if args.debug or config.get('debug', False):
+def init_queue(config: dict, engine) -> Queue:
+    logger.debug(f'队列配置 : {config}')
+    logger.info('初始化队列')
+    _queues = {
+        'mssql': MssqlQueue,
+        'oracle': OracleQueue
+    }
+    _config = config[db_driver]
+    queue = _queues[db_driver.lower()](engine=engine, **_config)
+    return queue
+
+
+def init_api(config: dict) -> JianDaoYun:
+    logger.debug(f'简道云 API 配置 : {config}')
+    logger.info('初始化简道云 API')
+    api = JianDaoYun(**config)
+    return api
+
+
+def init_logger(config: dict):
+    file_name = config.get('file_name', 'jiandaoyun_push_tool.log')
+    full_file_name = Path.joinpath(BASE_DIR, file_name)
+
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    file_handler = TimedRotatingFileHandler(filename=full_file_name, when='midnight', interval=1, backupCount=5)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    if run_args.debug or config.get('debug', False):
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug('--- Debug Mode Enable ---')
     else:
         logging.getLogger().setLevel(logging.INFO)
 
-
-def init_config(name) -> dict:
-    try:
-        configs = toml.load('config.toml')
-        config = configs[name]
-    except TypeError as error:
-        logger.critical('加载配置文件错误 - {}'.format(error), exc_info=True)
-        raise error
-    except FileNotFoundError as error:
-        logger.critical('找不到指定的配置文件 - {}'.format(error), exc_info=True)
-        raise error
-    except toml.TomlDecodeError as error:
-        logger.critical('配置文件解析错误 - {}'.format(error), exc_info=True)
-        raise error
-    except KeyError as error:
-        logger.critical('找不到配置项 - {}'.format(error), exc_info=True)
-    else:
-        return config
-
-
-def init_queue(config: dict) -> Queue:
-    _queues = {
-        'mssql': MssqlQueue,
-        'oracle': OracleQueue
-    }
-    db_driver: str = config['driver']
-    _config = config[db_driver]
-    queue = _queues[db_driver.lower()](**_config)
-    return queue
-
-
-def init_api(config: dict) -> JianDaoYun:
-    api = JianDaoYun(**config)
-    return api
+    logger.info(f'初始化日志')
+    logger.info(f'加载配置 >>> {config_title} <<<')
+    logger.info(f'数据库类型 >>> {db_driver} <<<')
 
 
 if __name__ == '__main__':
-    log_config = init_config('log')
-    db_config = init_config('database')
-    jdy_config = init_config('jiandaoyun')
+    try:
+        init_logger(log_config)
+        db_engine = init_db_engine(database_config)
+        db_queue = init_queue(queue_config, db_engine)
+        jdy_api = init_api(api_config)
+    except Exception as e:
+        logger.error('初始化错误，请检查配置。', exc_info=True)
+        raise e
 
-    init_log(log_config)
+    try:
+        if run_args.daemon:
+            queue_consumer = QueueConsumer(queue=db_queue, api=jdy_api)
+            queue_consumer.start()
+    except Exception as e:
+        logger.error('消费者程序因未知异常退出。', exc_info=True)
+        raise e
 
-    db_queue = init_queue(db_config)
-    jdy_api = init_api(jdy_config)
-
-    queue_consumer = QueueConsumer(queue=db_queue, api=jdy_api)
-    queue_consumer.start()
+    try:
+        if run_args.sync:
+            pass
+    except Exception as e:
+        logger.error('同步程序因未知异常退出。', exc_info=True)
+        raise e

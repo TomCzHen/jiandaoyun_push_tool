@@ -15,8 +15,8 @@ class MssqlQueueMessage(QueueMessage):
 
 class MssqlQueue(Queue):
     def __init__(self, **kwargs):
-        self._service = kwargs.get('service_name')
-        self._contract = kwargs.get('contract_name')
+        self._service = kwargs['service']
+        self._contract = kwargs['contract']
         super().__init__(**kwargs)
 
     @property

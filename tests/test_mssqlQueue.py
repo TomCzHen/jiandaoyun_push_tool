@@ -2,11 +2,14 @@ import toml
 from unittest import TestCase
 from sqlalchemy import create_engine, text
 from database_queue import MssqlQueue
+from config import database_config
+
+config = database_config['mssql']
 
 
 class TestMssqlQueue(TestCase):
     def setUp(self):
-        config = toml.load('../config.toml')['database']['mssql']
+
         uri = 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'.format(
             **config
         )
@@ -73,11 +76,8 @@ class TestMssqlQueue(TestCase):
 
     def test_dequeue_message(self):
         queue = MssqlQueue(
-            name=self.queue_name,
-            message_type=self.message_type_name,
-            service_name=self.service_name,
-            contract_name=self.contract_name,
-            engine=self.db_engine)
+            engine=self.db_engine,
+            **config)
         queue.enqueue_message('queue message test from python 测试')
         message = queue.dequeue_message()
         self.assertEqual(message.payload, 'queue message test from python 测试')

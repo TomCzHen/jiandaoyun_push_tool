@@ -123,11 +123,3 @@ class TestFormData(TestCase):
             form_data = FormData.create_form_data(widgets, payload)
         except Exception:
             self.assertRaises(KeyError)
-
-    def test_raw_string(self):
-        a_string = """
-        a
-        b
-        c
-        """
-        print(a_string)

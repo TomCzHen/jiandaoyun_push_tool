@@ -1,9 +1,9 @@
 class Queue:
 
     def __init__(self, **kwargs):
-        self._name = kwargs.get('name')
-        self._message_type = kwargs.get('message_type')
-        self._engine = kwargs.get('engine')
+        self._name = kwargs['name']
+        self._message_type = kwargs['message_type']
+        self._engine = kwargs['engine']
 
     @property
     def name(self):
@@ -26,7 +26,7 @@ class Queue:
 
 class QueueMessage:
     def __init__(self, payload):
-        self._payload = payload
+        self._payload: str = payload
 
     @property
     def payload(self):
