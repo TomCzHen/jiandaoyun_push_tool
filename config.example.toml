@@ -3,9 +3,8 @@ title = 'example config'
 db_driver = 'oracle' # oracle or mssql
 
 [log]
-
 debug = false
-file_name = 'jiandaoyun_push_tool.log'
+file_name = 'jdy_push_tool.log'
 
 [database]
     [database.oracle]
@@ -40,10 +39,9 @@ file_name = 'jiandaoyun_push_tool.log'
 api_key = "jian_dao_yun_api_key"
 
     [jian_dao_yun.safe_limit]
-    # 1-10
-    create = 10
-    update = 10
-    delete = 10
+    create = 1 # 最大10，最小 0
+    update = 1 # 最大10，最小 1
+    delete = 1 # 最大10，最小 0
 
 [sync]
 departments_table = 'JDY_SYNC_DEPARTMENTS'

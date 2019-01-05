@@ -50,12 +50,11 @@ def init_api(config: dict) -> JianDaoYun:
 
 
 def init_logger(config: dict):
-    file_name = config.get('file_name', 'jiandaoyun_push_tool')
+    file_name = config.get('file_name', 'jdy_push_tool.log')
     full_file_name = Path.joinpath(BASE_DIR, file_name)
     file_handler = TimedRotatingFileHandler(filename=full_file_name, encoding='utf-8', when='midnight', interval=1,
                                             backupCount=5)
     file_handler.setFormatter(formatter)
-    file_handler.suffix = '.log'
     logger.addHandler(file_handler)
     if run_args.debug or config.get('debug', False):
         logging.getLogger().setLevel(logging.DEBUG)
