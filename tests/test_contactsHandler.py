@@ -120,11 +120,13 @@ class TestSyncHandler(TestCase):
         departments_data = json.loads(raw_departments_json)['departments']
 
         self.handler.handle(users=users_data, departments=departments_data)
+
         conn = self._db_engine.connect()
-        query_users = conn.execute(self.handler.users_table.select()).fetchall()
         users_list = [(user['_id'], user['name']) for user in users_data]
-        departments_list = [(department['_id'], department['parent_id'], department['name']) for department in
-                            departments_data]
-        query_departments = conn.execute(self.handler.departments_table.select()).fetchall()
+        departments_list = [
+            (department['_id'], department['parent_id'], department['name']) for department in departments_data
+        ]
+        query_users = conn.execute(self.handler.users_table.select(), autocommit=True).fetchall()
+        query_departments = conn.execute(self.handler.departments_table.select(), autocommit=True).fetchall()
         self.assertListEqual(query_users, users_list)
         self.assertListEqual(query_departments, departments_list)
