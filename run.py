@@ -8,7 +8,7 @@ from config import BASE_DIR, db_driver, config_title, log_config, database_confi
 from api import JianDaoYun
 from database_queue import Queue, OracleQueue, MssqlQueue
 from queue_consumer import Consumer as QueueConsumer
-from handlers import SyncHandler
+from handlers import ContactsHandler
 from args import args as run_args
 
 
@@ -86,15 +86,14 @@ if __name__ == '__main__':
 
     try:
         if run_args.sync:
-
             departments_response = jdy_api.fetch_department_list(dept_id='root', has_child=True)
             departments = departments_response.json()['departments']
 
             users_response = jdy_api.fetch_member_list(dept_id='root', has_child=True)
             users = users_response.json()['users']
 
-            sync_handler = SyncHandler(engine=db_engine, **sync_config)
-            sync_handler.handle(users=users, departments=departments)
+            contacts_handler = ContactsHandler(engine=db_engine, **sync_config)
+            contacts_handler.handle(users=users, departments=departments)
     except Exception as e:
         logger.error('同步程序因未知异常退出。', exc_info=True)
         raise e

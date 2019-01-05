@@ -1,7 +1,7 @@
 import json
 import os
 from unittest import TestCase
-from handlers import SyncHandler
+from handlers import ContactsHandler
 from sqlalchemy import create_engine
 from config import database_config, sync_config, db_driver
 
@@ -20,7 +20,18 @@ class TestSyncHandler(TestCase):
 
         uri = uri_formats[db_driver.lower()].format(**_config)
         self._db_engine = create_engine(uri)
-        self.user_table_name = f"t_{sync_config['users_table']}"
+
+        _config = {
+            "users_table": f"t_{sync_config['users_table']}",
+            "departments_table": f"t_{sync_config['departments_table']}",
+            "relationships_table": f"t_{sync_config['relationships_table']}",
+        }
+        self.handler = ContactsHandler(engine=self._db_engine, **_config)
+
+    def tearDown(self):
+        self.handler.relationships_table.drop(self._db_engine, checkfirst=True)
+        self.handler.users_table.drop(self._db_engine, checkfirst=True)
+        self.handler.departments_table.drop(self._db_engine, checkfirst=True)
 
     def test_handle(self):
         raw_users_json = """
@@ -104,7 +115,16 @@ class TestSyncHandler(TestCase):
     ]
 }
         """
-        users = json.loads(raw_users_json)['users']
-        departments = json.loads(raw_departments_json)['departments']
-        sync_handler = SyncHandler(engine=self._db_engine, **sync_config)
-        sync_handler.handle(users=users, departments=departments)
+
+        users_data = json.loads(raw_users_json)['users']
+        departments_data = json.loads(raw_departments_json)['departments']
+
+        self.handler.handle(users=users_data, departments=departments_data)
+        conn = self._db_engine.connect()
+        query_users = conn.execute(self.handler.users_table.select()).fetchall()
+        users_list = [(user['_id'], user['name']) for user in users_data]
+        departments_list = [(department['_id'], department['parent_id'], department['name']) for department in
+                            departments_data]
+        query_departments = conn.execute(self.handler.departments_table.select()).fetchall()
+        self.assertListEqual(query_users, users_list)
+        self.assertListEqual(query_departments, departments_list)

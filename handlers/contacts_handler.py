@@ -1,5 +1,5 @@
 from log import logger
-from sqlalchemy import Table, Column, String, MetaData, ForeignKey
+from sqlalchemy import Table, Column, String, Integer, MetaData, ForeignKey
 from marshmallow import Schema, fields
 
 
@@ -27,9 +27,29 @@ class Handler:
     def config(self):
         return self._config
 
+    @property
+    def users_table(self):
+        return self._users_table
+
+    @property
+    def users_schema(self):
+        return self._users_schema
+
+    @property
+    def departments_table(self):
+        return self._departments_table
+
+    @property
+    def departments_schema(self):
+        return self._departments_schema
+
+    @property
+    def relationships_table(self):
+        return self._relationships_table
+
     def handle(self, users, departments):
 
-        users_data = self._users_schema.load(users).data
+        users_data = self.users_schema.load(users).data
         departments_data = self._departments_schema.load(departments).data
         relationships_data = []
         for user in users:
@@ -47,20 +67,20 @@ class Handler:
             logger.info(f'同步用户数据 [{len(users)}] 条，部门数据 [{len(departments)}] 条。')
 
     def _sync_to_database(self, users, departments, relationships):
-        users_table = self._init_users_table()
-        departments_table = self._init_departments_table()
-        relationships_table = self._init_relationships_table()
+        self._users_table = self._init_users_table()
+        self._departments_table = self._init_departments_table()
+        self._relationships_table = self._init_relationships_table()
 
         conn = self._engine.connect()
         trans = conn.begin()
         try:
-            conn.execute(relationships_table.delete())
-            conn.execute(users_table.delete())
-            conn.execute(departments_table.delete())
+            conn.execute(self.relationships_table.delete())
+            conn.execute(self.users_table.delete())
+            conn.execute(self.departments_table.delete())
 
-            conn.execute(users_table.insert(), users)
-            conn.execute(departments_table.insert(), departments)
-            conn.execute(relationships_table.insert(), relationships)
+            conn.execute(self.users_table.insert(), users)
+            conn.execute(self.departments_table.insert(), departments)
+            conn.execute(self.relationships_table.insert(), relationships)
         except Exception as error:
             trans.rollback()
             raise error
@@ -95,6 +115,7 @@ class Handler:
         table = Table(
             self.config["relationships_table"],
             self.__metadata,
+            Column('id', Integer, autoincrement=True, primary_key=True),
             Column('department_id', String(32), ForeignKey(f'{self.config["departments_table"]}.id')),
             Column('user_id', String(32), ForeignKey(f'{self.config["users_table"]}.id')),
         )
