@@ -31,3 +31,6 @@ class QueueMessage:
     @property
     def payload(self):
         return self._payload
+
+    def __str__(self):
+        return self._payload

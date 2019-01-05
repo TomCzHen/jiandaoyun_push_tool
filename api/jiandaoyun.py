@@ -64,11 +64,39 @@ API_EXCEPTIONS = {
 class JianDaoYun(API):
     def __init__(self, **kwargs):
         self._api_key = kwargs['api_key']
+        self._safe_limit: dict = kwargs['safe_limit']
         super().__init__(scheme='https', host='www.jiandaoyun.com', base_path='api/v1')
 
     @property
     def api_key(self):
         return self._api_key
+
+    @property
+    def create_safe_limit(self):
+        limit = self._safe_limit.get('create', 0)
+        if limit > 10:
+            limit = 10
+        if limit < 0:
+            limit = 0
+        return limit
+
+    @property
+    def update_safe_limit(self):
+        limit = self._safe_limit.get('update', 1)
+        if limit > 10:
+            limit = 10
+        if limit < 1:
+            limit = 1
+        return limit
+
+    @property
+    def delete_safe_limit(self):
+        limit = self._safe_limit.get('delete', 0)
+        if limit > 10:
+            limit = 10
+        if limit < 1:
+            limit = 1
+        return limit
 
     def fetch_form_widgets(self, app_id: str, entry_id: str) -> Response:
         assert app_id != ''
@@ -232,5 +260,6 @@ class JianDaoYun(API):
     @RateLimiter(max_calls=5, period=1)
     def _request(self, method: str = 'GET', headers: dict = None, path: str = '', params=None, data: dict = None,
                  files=None, timeout=10):
-        super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
-                         timeout=timeout)
+        response = super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
+                                    timeout=timeout)
+        return response

@@ -39,7 +39,7 @@ file_name = 'jiandaoyun_push_tool.log'
 [jian_dao_yun]
 api_key = "jian_dao_yun_api_key"
 
-    [jian_dao_yun.data_safe_limit]
+    [jian_dao_yun.safe_limit]
     # 1-10
     create = 10
     update = 10

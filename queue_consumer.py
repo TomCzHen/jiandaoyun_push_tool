@@ -1,22 +1,22 @@
-from log import logger
 from api import JianDaoYun
+from time import sleep
+from log import logger
 from database_queue import Queue, QueueMessage
-from handlers import QueueMessageHandler, FormDataHandler
+from handlers import QueueMessageHandler
 from cache import queue_cache as cache
-from handlers.exceptions import InvalidPayload
+from handlers.exceptions import InvalidPayload, HandlerException
 
 
 class Consumer:
     def __init__(self, queue: Queue, api: JianDaoYun):
-        self._db_queue = queue
+        self._queue = queue
         self._api = api
-        self._queue_message_handler = QueueMessageHandler(self._api)
-        self._form_data_handler = FormDataHandler(self._api)
+        self._handler = QueueMessageHandler(self._api)
 
     def _get_message(self) -> QueueMessage:
         message = cache.get('message')
         if not message:
-            message = self._db_queue.dequeue_message()
+            message = self._queue.dequeue_message()
             cache.set('message', message)
         return message
 
@@ -26,8 +26,15 @@ class Consumer:
             try:
                 message = self._get_message()
                 if message:
-                    form_data = self._queue_message_handler.create_form_data(message)
-                    self._form_data_handler.handle_form_data(form_data)
+                    logger.debug(f'Message Payload : {message}')
+                    self._handler.handle(message)
+                else:
+                    sleep(3)
             except InvalidPayload as e:
-                logger.warning(e)
+                cache.delete('message')
+                logger.warning(e.msg)
+            except HandlerException as e:
+                cache.delete('message')
+                logger.warning(e.msg)
+            else:
                 cache.delete('message')

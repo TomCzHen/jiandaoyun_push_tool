@@ -78,6 +78,7 @@ class FormData:
     def __init__(self, widgets: list, payload: dict):
         self._widgets = widgets
         self._payload = payload
+        self._exists_data = []
         self._initialize()
 
     @property
@@ -85,27 +86,35 @@ class FormData:
         return self._payload
 
     @property
+    def exists_data(self):
+        return self._exists_data
+
+    @exists_data.setter
+    def exists_data(self, value):
+        self._exists_data = value
+
+    @property
     def widgets(self):
         return self._widgets
 
     @property
-    def app_id(self):
+    def app_id(self) -> str:
         return self.payload['app_id']
 
     @property
-    def entry_id(self):
+    def entry_id(self) -> str:
         return self.payload['entry_id']
 
     @property
-    def identifier(self):
+    def identifier(self) -> str:
         return f'{self.app_id}-{self.entry_id}'
 
     @property
-    def operate(self):
+    def operate(self) -> str:
         return self.payload['op']
 
     @property
-    def data(self):
+    def data(self) -> dict:
         return self.payload['data']
 
     @property
@@ -123,10 +132,6 @@ class FormData:
     @property
     def is_start_workflow(self):
         return self.payload.get('is_start_workflow', False)
-
-    @classmethod
-    def create_form_data(cls, widgets: list, payload: dict):
-        return cls(widgets, payload)
 
     def _initialize(self):
 

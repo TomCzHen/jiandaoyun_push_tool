@@ -1,23 +1,18 @@
 import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
-from time import sleep
-from log import logger
+from log import logger, formatter
 from pathlib import Path
 from sqlalchemy import create_engine
-from config import BASE_DIR, db_driver, config_title, log_config, database_config, api_config, queue_config
-from api import JianDaoYun, WeChatAgent
+from config import BASE_DIR, db_driver, config_title, log_config, database_config, api_config, queue_config, sync_config
+from api import JianDaoYun
 from database_queue import Queue, OracleQueue, MssqlQueue
 from queue_consumer import Consumer as QueueConsumer
+from handlers import SyncHandler
 from args import args as run_args
 
 
-def init_contacts_sync(config: dict):
-    pass
-
-
 def init_db_engine(config: dict):
-    logger.debug(f'数据库配置 : {config}')
     logger.info('初始化数据库连接')
     uri_formats = {
         'oracle': 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}',
@@ -25,7 +20,7 @@ def init_db_engine(config: dict):
     }
 
     _config: dict = config[db_driver]
-
+    logger.debug(f'数据库配置 : {_config}')
     if db_driver.lower() == 'oracle':
         os.environ['NLS_LANG'] = _config.get('nls_lang')
         os.environ['LD_LIBRARY_PATH'] = _config.get('ld_library_path')
@@ -36,13 +31,13 @@ def init_db_engine(config: dict):
 
 
 def init_queue(config: dict, engine) -> Queue:
-    logger.debug(f'队列配置 : {config}')
     logger.info('初始化队列')
     _queues = {
         'mssql': MssqlQueue,
         'oracle': OracleQueue
     }
     _config = config[db_driver]
+    logger.debug(f'队列配置 : {_config}')
     queue = _queues[db_driver.lower()](engine=engine, **_config)
     return queue
 
@@ -55,22 +50,20 @@ def init_api(config: dict) -> JianDaoYun:
 
 
 def init_logger(config: dict):
-    file_name = config.get('file_name', 'jiandaoyun_push_tool.log')
+    file_name = config.get('file_name', 'jiandaoyun_push_tool')
     full_file_name = Path.joinpath(BASE_DIR, file_name)
-
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
-    file_handler = TimedRotatingFileHandler(filename=full_file_name, when='midnight', interval=1, backupCount=5)
+    file_handler = TimedRotatingFileHandler(filename=full_file_name, encoding='utf-8', when='midnight', interval=1,
+                                            backupCount=5)
     file_handler.setFormatter(formatter)
+    file_handler.suffix = '.log'
     logger.addHandler(file_handler)
     if run_args.debug or config.get('debug', False):
         logging.getLogger().setLevel(logging.DEBUG)
-        logger.debug('--- Debug Mode Enable ---')
     else:
         logging.getLogger().setLevel(logging.INFO)
 
     logger.info(f'初始化日志')
-    logger.info(f'加载配置 >>> {config_title} <<<')
-    logger.info(f'数据库类型 >>> {db_driver} <<<')
+    logger.info(f'加载配置 >>> {config_title} <<<,数据库类型 >>> {db_driver} <<<')
 
 
 if __name__ == '__main__':
@@ -93,7 +86,14 @@ if __name__ == '__main__':
 
     try:
         if run_args.sync:
-            pass
+            departments_response = jdy_api.fetch_department_list(dept_id='root', has_child=True)
+            departments = departments_response.json()['departments']
+
+            users_response = jdy_api.fetch_member_list(dept_id='root', has_child=True)
+            users = users_response.json()['users']
+
+            sync_handler = SyncHandler(api=jdy_api, engine=db_engine, **sync_config)
+            sync_handler.handle(users=users, departments=departments)
     except Exception as e:
         logger.error('同步程序因未知异常退出。', exc_info=True)
         raise e
