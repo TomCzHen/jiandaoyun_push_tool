@@ -1,4 +1,3 @@
-from api import JianDaoYun
 from log import logger
 from sqlalchemy import Table, Column, String, MetaData, ForeignKey
 from marshmallow import Schema, fields
@@ -17,8 +16,7 @@ class UserSchema(Schema):
 
 
 class Handler:
-    def __init__(self, api: JianDaoYun, engine, **kwargs):
-        self._api = api
+    def __init__(self, engine, **kwargs):
         self._engine = engine
         self._config = kwargs
         self.__metadata = MetaData()

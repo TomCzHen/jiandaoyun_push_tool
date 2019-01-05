@@ -86,13 +86,14 @@ if __name__ == '__main__':
 
     try:
         if run_args.sync:
+
             departments_response = jdy_api.fetch_department_list(dept_id='root', has_child=True)
             departments = departments_response.json()['departments']
 
             users_response = jdy_api.fetch_member_list(dept_id='root', has_child=True)
             users = users_response.json()['users']
 
-            sync_handler = SyncHandler(api=jdy_api, engine=db_engine, **sync_config)
+            sync_handler = SyncHandler(engine=db_engine, **sync_config)
             sync_handler.handle(users=users, departments=departments)
     except Exception as e:
         logger.error('同步程序因未知异常退出。', exc_info=True)

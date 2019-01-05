@@ -14,10 +14,10 @@ class TestMssqlQueue(TestCase):
             **config
         )
         self.db_engine = create_engine(uri)
-        self.queue_name = f'test{config["queue_name"]}'
-        self.service_name = f'test{config["service_name"]}'
-        self.contract_name = f'test{config["contract_name"]}'
-        self.message_type_name = f'test{config["message_type_name"]}'
+        self.queue_name = f't_{config["queue_name"]}'
+        self.service_name = f't_{config["service_name"]}'
+        self.contract_name = f't_{config["contract_name"]}'
+        self.message_type_name = f't_{config["message_type_name"]}'
 
         sql_create_message_type = text(
             f"CREATE MESSAGE TYPE [{self.message_type_name}] VALIDATION = NONE;"
