@@ -37,13 +37,13 @@ class OracleQueue(Queue):
             conn.close()
             raise e
 
-    def enqueue_message(self, payload):
+    def enqueue_message(self, payload: str):
         conn: Connection = self._engine.raw_connection()
-        message_options = conn.deqoptions()
+        message_options = conn.enqoptions()
         message_properties = conn.msgproperties()
         message_type = conn.gettype(self.message_type)
         message = message_type.newobject()
-        message.PAYLOAD = payload
+        message.PAYLOAD = payload.encode('utf-8')
         conn.begin()
         try:
             conn.enq(self.name, message_options, message_properties, message)

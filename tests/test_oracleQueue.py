@@ -1,15 +1,20 @@
-import toml
+import os
 from unittest import TestCase
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text
+from config import database_config, queue_config
+from database_queue import OracleQueue
 
 
 class TestOracleQueue(TestCase):
     def setUp(self):
-        config = toml.load('../config.toml')['database']['oracle']
-        uri = 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}'.format(**config)
+        _db_config = database_config['oracle']
+        _queue_config = queue_config['oracle']
+        uri = 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}'.format(**_db_config)
+        os.environ['NLS_LANG'] = _db_config.get('nls_lang')
+        os.environ['LD_LIBRARY_PATH'] = _db_config.get('ld_library_path')
         self.db_engine = create_engine(uri)
-        self.queue_name = f't_{config["queue_name"]}'
-        self.message_type_name = f't_{config["message_type_name"]}'
+        self.queue_name = f't_{_queue_config["name"]}'
+        self.message_type_name = f't_{_queue_config["message_type"]}'
 
         sql_create_message_type = text(
             f'CREATE TYPE {self.message_type_name} AS object ( payload  CLOB );'
@@ -17,12 +22,12 @@ class TestOracleQueue(TestCase):
         sql_create_queue = text(
             f"""BEGIN
                     DBMS_AQADM.CREATE_QUEUE_TABLE(
-                        queue_table =>'{self.queue_name}tb',
+                        queue_table =>'{self.queue_name}_tb',
                         queue_payload_type  => '{self.message_type_name}'
                         );
                     DBMS_AQADM.CREATE_QUEUE(
                         queue_name => '{self.queue_name}',
-                        queue_table => '{self.queue_name}tb',
+                        queue_table => '{self.queue_name}_tb',
                         max_retries => 65535
                         );
                     DBMS_AQADM.START_QUEUE(
@@ -38,7 +43,7 @@ class TestOracleQueue(TestCase):
             conn.execute(sql_create_queue)
         except Exception as e:
             trans.rollback()
-            # raise e
+            raise e
         else:
             trans.commit()
         finally:
@@ -50,7 +55,7 @@ class TestOracleQueue(TestCase):
             f"""BEGIN
                     DBMS_AQADM.STOP_QUEUE( queue_name => '{self.queue_name}' );
                     DBMS_AQADM.DROP_QUEUE( queue_name => '{self.queue_name}' );
-                    DBMS_AQADM.DROP_QUEUE_TABLE ( queue_table => '{self.queue_name}tb' );
+                    DBMS_AQADM.DROP_QUEUE_TABLE ( queue_table => '{self.queue_name}_tb' );
                 END;
 """
         )
@@ -68,4 +73,13 @@ class TestOracleQueue(TestCase):
             conn.close()
 
     def test_dequeue_message(self):
-        self.fail()
+        _config = {
+            "name": self.queue_name,
+            "message_type": self.message_type_name
+        }
+        queue = OracleQueue(
+            engine=self.db_engine,
+            **_config)
+        queue.enqueue_message('queue message test from python 测试')
+        message = queue.dequeue_message()
+        self.assertEqual(message.payload, 'queue message test from python 测试')
