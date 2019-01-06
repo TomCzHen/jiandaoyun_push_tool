@@ -34,3 +34,7 @@ class QueueMessage:
 
     def __str__(self):
         return self._payload
+
+
+class QueueException(Exception):
+    pass
