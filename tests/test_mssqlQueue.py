@@ -2,22 +2,21 @@ import toml
 from unittest import TestCase
 from sqlalchemy import create_engine, text
 from database_queue import MssqlQueue
-from config import database_config
-
-config = database_config['mssql']
+from config import database_config, queue_config
 
 
 class TestMssqlQueue(TestCase):
     def setUp(self):
-
+        _db_config = database_config['mssql']
+        _queue_config = queue_config['mssql']
         uri = 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'.format(
-            **config
+            **_db_config
         )
         self.db_engine = create_engine(uri)
-        self.queue_name = f't_{config["queue_name"]}'
-        self.service_name = f't_{config["service_name"]}'
-        self.contract_name = f't_{config["contract_name"]}'
-        self.message_type_name = f't_{config["message_type_name"]}'
+        self.queue_name = f't_{_queue_config["name"]}'
+        self.service_name = f't_{_queue_config["service"]}'
+        self.contract_name = f't_{_queue_config["contract"]}'
+        self.message_type_name = f't_{_queue_config["message_type"]}'
 
         sql_create_message_type = text(
             f"CREATE MESSAGE TYPE [{self.message_type_name}] VALIDATION = NONE;"
@@ -75,9 +74,15 @@ class TestMssqlQueue(TestCase):
             conn.close()
 
     def test_dequeue_message(self):
+        _config = {
+            "name": self.queue_name,
+            "service": self.service_name,
+            "contract": self.contract_name,
+            "message_type": self.message_type_name
+        }
         queue = MssqlQueue(
             engine=self.db_engine,
-            **config)
+            **_config)
         queue.enqueue_message('queue message test from python 测试')
         message = queue.dequeue_message()
         self.assertEqual(message.payload, 'queue message test from python 测试')
