@@ -25,7 +25,7 @@ class TestMssqlQueue(TestCase):
             f"CREATE CONTRACT [{self.contract_name}] ([{self.message_type_name}] SENT BY INITIATOR);"
         )
         sql_create_queue = text(
-            f"CREATE QUEUE {self.queue_name} WITH STATUS = ON,RETENTION = OFF;"
+            f"CREATE QUEUE {self.queue_name} WITH STATUS = ON,RETENTION = OFF,POISON_MESSAGE_HANDLING (STATUS = OFF);"
         )
         sql_create_service = text(
             f"CREATE SERVICE [{self.service_name}] ON QUEUE {self.queue_name}([{self.contract_name}]);"
