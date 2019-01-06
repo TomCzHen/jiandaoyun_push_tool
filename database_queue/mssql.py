@@ -1,6 +1,6 @@
 from sqlalchemy.sql import text
 from sqlalchemy.exc import ProgrammingError
-from .core import Queue, QueueMessage
+from .core import Queue, QueueMessage, QueueException
 
 
 class MssqlQueueMessage(QueueMessage):
@@ -46,7 +46,8 @@ class MssqlQueue(Queue):
         except Exception as e:
             trans.rollback()
             conn.close()
-            raise e
+            logger.error(e, exc_info=True)
+            raise QueueException
 
     def enqueue_message(self, payload: str):
         sql = text(
@@ -67,6 +68,7 @@ class MssqlQueue(Queue):
         except ProgrammingError as e:
             trans.rollback()
             conn.close()
-            raise e
+            logger.error(e, exc_info=True)
+            raise QueueException
         else:
             trans.commit()

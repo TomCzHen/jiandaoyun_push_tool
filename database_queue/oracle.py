@@ -1,5 +1,6 @@
-from .core import Queue, QueueMessage
-from cx_Oracle import Connection, DEQ_FIRST_MSG, DEQ_NO_WAIT, DatabaseError
+from .core import Queue, QueueMessage, QueueException
+from cx_Oracle import Connection, DEQ_FIRST_MSG, DEQ_NO_WAIT
+from log import logger
 
 
 class OracleQueueMessage(QueueMessage):
@@ -32,10 +33,11 @@ class OracleQueue(Queue):
                 conn.commit()
                 conn.close()
                 return queue_message
-        except DatabaseError as e:
+        except Exception as e:
             conn.rollback()
             conn.close()
-            raise e
+            logger.error(e, exc_info=True)
+            raise QueueException
 
     def enqueue_message(self, payload: str):
         conn: Connection = self._engine.raw_connection()
@@ -47,9 +49,10 @@ class OracleQueue(Queue):
         conn.begin()
         try:
             conn.enq(self.name, message_options, message_properties, message)
-        except DatabaseError as e:
+        except Exception as e:
             conn.rollback()
             conn.close()
-            raise e
+            logger.error(e, exc_info=True)
+            raise QueueException
         else:
             conn.commit()
