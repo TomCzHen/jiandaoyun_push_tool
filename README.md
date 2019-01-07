@@ -6,8 +6,8 @@
 
 ## 配置数据库
 
-* [Oracle]()
-* [SQL Server]()
+* [Oracle](/doc/oracle_deploy.md)
+* [SQL Server](/doc/mssql_deploy.md)
 
 ## 使用说明
 
@@ -19,7 +19,7 @@
 
 ### 队列消息
 
-#### 格式要求
+#### 格式
 
 ```json
 {
