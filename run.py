@@ -80,7 +80,7 @@ if __name__ == '__main__':
             queue_consumer = QueueConsumer(queue=db_queue, api=jdy_api)
             queue_consumer.start()
     except Exception as e:
-        logger.error('消费者程序因未知异常退出。', exc_info=True)
+        logger.error('消费者程序因未知异常退出。')
         raise e
 
     try:

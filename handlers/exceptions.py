@@ -3,6 +3,9 @@ class InvalidPayload(Exception):
         self.msg = f'{msg}'
         super().__init__(self.msg)
 
+    def __str__(self):
+        return self.msg
+
 
 class PayloadDecodeError(InvalidPayload):
     def __init__(self, msg):
@@ -20,6 +23,9 @@ class HandlerException(Exception):
     def __init__(self, msg):
         self.msg = f'{msg}'
         super().__init__(self.msg)
+
+    def __str__(self):
+        return self.msg
 
 
 class SafeDataLimitException(HandlerException):

@@ -1,4 +1,4 @@
-from .core import API, APIException, cache
+from .core import API, APIException
 from ratelimiter import RateLimiter
 
 

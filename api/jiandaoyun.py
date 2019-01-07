@@ -260,6 +260,14 @@ class JianDaoYun(API):
     @RateLimiter(max_calls=5, period=1)
     def _request(self, method: str = 'GET', headers: dict = None, path: str = '', params=None, data: dict = None,
                  files=None, timeout=10):
-        response = super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
-                                    timeout=timeout)
+
+        response = super()._request(
+            method=method,
+            headers=headers,
+            path=path,
+            params=params,
+            data=data,
+            files=files,
+            timeout=timeout
+        )
         return response

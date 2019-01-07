@@ -1,5 +1,6 @@
 import requests
-from cache import api_cache as cache
+from log import logger
+from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 
 
 class APIException(Exception):
@@ -7,6 +8,13 @@ class APIException(Exception):
     def __init__(self, code, message):
         self.code = code
         self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+class NetworkError(IOError):
+    pass
 
 
 class API:
@@ -51,16 +59,9 @@ class API:
                 timeout=timeout
             )
             self._raise_api_error(response)
-        except requests.exceptions.ConnectionError as e:
-            raise e
-        except requests.exceptions.Timeout as e:
-            raise e
-        except requests.exceptions.TooManyRedirects as e:
-            raise e
-        except APIException as e:
-            raise e
-        except requests.exceptions.HTTPError as e:
-            raise e
+        except (ConnectionError, Timeout, TooManyRedirects) as e:
+            logger.error(e, exc_info=True)
+            raise NetworkError
         else:
             return response
 
