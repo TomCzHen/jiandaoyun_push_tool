@@ -46,9 +46,9 @@ file_name = 'jdy_push_tool.log'
 # Oracle 队列配置
     [queue.oracle]
         # 队列名称
-        name = "jdy_push_msg_q"
+        name = "JDY_PUSH_MSG_Q"
         # 队列消息类型
-        message_type = "jdy_push_msg"
+        message_type = "JDY_PUSH_MSG"
 
     [queue.mssql]
         name = "JDYPushQueue"
