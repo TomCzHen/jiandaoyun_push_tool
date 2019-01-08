@@ -1,11 +1,12 @@
 from unittest import TestCase
 from sqlalchemy import create_engine, text
 from database_queue import MssqlQueue
-from config import database_config, queue_config, MssqlQueueConfig
+from config import database_config, queue_config, MssqlQueueConfig, MssqlDatabaseConfig
 
 
 class TestMssqlQueue(TestCase):
     def setUp(self):
+        assert isinstance(database_config, MssqlDatabaseConfig)
         _config = {
             'name': f't_{queue_config.name}',
             'message_type': f't_{queue_config.message_type}',
