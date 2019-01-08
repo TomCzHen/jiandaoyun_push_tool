@@ -12,12 +12,6 @@ from handlers import ContactsHandler
 from args import args as run_args
 
 
-def init_db_engine(config):
-    logger.info('初始化数据库连接')
-    engine = create_engine(config.uri)
-    return engine
-
-
 def init_queue(config, engine) -> Queue:
     logger.info('初始化队列')
     _queues = {
@@ -28,20 +22,14 @@ def init_queue(config, engine) -> Queue:
     return queue
 
 
-def init_jdy_api(config) -> JianDaoYun:
-    logger.info('初始化简道云 API')
-    api = JianDaoYun(config)
-    return api
-
-
-def init_logger(config: dict):
-    file_name = config.get('file_name', 'jdy_push_tool.log')
+def init_logger(config):
+    file_name = config.file_name
     full_file_name = Path.joinpath(BASE_DIR, file_name)
     file_handler = TimedRotatingFileHandler(filename=full_file_name, encoding='utf-8', when='midnight', interval=1,
                                             backupCount=5)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    if run_args.debug or config.get('debug', False):
+    if run_args.debug or config.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
@@ -53,9 +41,9 @@ def init_logger(config: dict):
 if __name__ == '__main__':
     try:
         init_logger(log_config)
-        db_engine = init_db_engine(database_config)
+        db_engine = create_engine(database_config.uri)
         db_queue = init_queue(queue_config, db_engine)
-        jdy_api = init_jdy_api(jdy_config)
+        jdy_api = JianDaoYun(jdy_config)
     except Exception as e:
         logger.error('初始化错误，请检查配置。', exc_info=True)
         raise e

@@ -3,6 +3,7 @@ from requests.exceptions import HTTPError
 from ratelimiter import RateLimiter
 from .core import API, APIException
 from config import JdyApiConfig
+from collections import namedtuple
 
 
 class BadRequestParamsException(APIException):
@@ -61,11 +62,13 @@ API_EXCEPTIONS = {
     1010: UserNotExistException,
 }
 
+SafeLimit = namedtuple('SafeLimit', ['create', 'update', 'delete'])
+
 
 class JianDaoYun(API):
     def __init__(self, config: JdyApiConfig):
         self._api_key = config.api_key
-        self._safe_limit: dict = config.safe_limit
+        self._safe_limit = SafeLimit(**config.safe_limit)
         super().__init__(scheme='https', host='www.jiandaoyun.com', base_path='api/v1')
 
     @property
@@ -74,30 +77,30 @@ class JianDaoYun(API):
 
     @property
     def create_safe_limit(self):
-        limit = self._safe_limit.get('create', 0)
-        if limit > 10:
-            limit = 10
-        if limit < 0:
-            limit = 0
-        return limit
+        assert isinstance(self._safe_limit.create, int)
+        if self._safe_limit.create > 10:
+            return 10
+        if self._safe_limit.create < 0:
+            return 0
+        return self._safe_limit.create
 
     @property
     def update_safe_limit(self):
-        limit = self._safe_limit.get('update', 1)
-        if limit > 10:
-            limit = 10
-        if limit < 1:
-            limit = 1
-        return limit
+        assert isinstance(self._safe_limit.update, int)
+        if self._safe_limit.update > 10:
+            return 10
+        if self._safe_limit.update < 1:
+            return 1
+        return self._safe_limit.update
 
     @property
     def delete_safe_limit(self):
-        limit = self._safe_limit.get('delete', 0)
-        if limit > 10:
-            limit = 10
-        if limit < 1:
-            limit = 1
-        return limit
+        assert isinstance(self._safe_limit.delete, int)
+        if self._safe_limit.delete > 10:
+            return 10
+        if self._safe_limit.delete < 1:
+            return 1
+        return self._safe_limit.delete
 
     def fetch_form_widgets(self, app_id: str, entry_id: str) -> Response:
         assert app_id != ''
