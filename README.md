@@ -20,8 +20,26 @@
 通过 API 操作表单有以下限制：
 
 * 表单创建人固定为组织名称
-* 网页端支持的约束检查在 API 无效（例如：唯一约束、必填项）
+* 网页端支持的约束检查在 API 无效（例如：唯一、必填等）
 * 部分表单控件 API 不支持
+
+复制 `config.example.toml` 为 `config.toml`，查看配置文件注释进行配置。
+
+* 守护进程运行
+
+Windows 部署 SQL Server 推荐使用代理作业随代理启动，或者使用 [NSSM - the Non-Sucking Service Manager](https://nssm.cc/) 添加为系统服务运行。
+
+```bash
+python run.py --daemon
+```
+
+* 通讯同步
+
+使用系统计划任务定时运行。
+
+```bash
+python run.py --sync
+```
 
 ### 运行逻辑
 

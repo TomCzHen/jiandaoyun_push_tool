@@ -1,20 +1,37 @@
 # 配置文件示例
 title = 'example config'
-db_driver = 'oracle' # oracle or mssql
+
+# 数据库类型
+# oracle|mssql
+db_driver = 'oracle'
 
 [log]
+# 是否开启 deubg
+# true|false
 debug = false
+
+# 日志文件名。
+# 使用 logs/jdy_push_tool.log 可以将日志保存在 logs 目录下，但 logs 路径必须存在。
 file_name = 'jdy_push_tool.log'
 
+# 数据库配置
 [database]
+# Oracle 数据库配置
     [database.oracle]
+    # 主机地址
     host = "127.0.0.1"
+    # 端口
     port = 1521
+    # 数据库名
     database_name = "TESTDB"
+    # 用户名
     username = "SYSTEM"
+    # 密码
     password = "P@ssw0rd"
 
+    # Oracle Client 库路径
     ld_library_path = 'D:\Oracle\client\12_2'
+    # 写入数据时使用的编码
     nls_lang = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
     [database.mssql]
@@ -24,28 +41,56 @@ file_name = 'jdy_push_tool.log'
     password = "P@ssw0rd"
     database_name = 'queue_demo'
 
+# 队列配置
 [queue]
+# Oracle 队列配置
     [queue.oracle]
+        # 队列名称
         name = "jdy_push_msg_q"
+        # 队列消息类型
         message_type = "jdy_push_msg"
 
     [queue.mssql]
         name = "JDYPushQueue"
         message_type = "JDYPushMessage"
+        # 绑定服务名
         service = "JDYPushService"
+        # 约束名称
         contract = "JDYPushMessageContract"
 
+# 简道云配置
 [jian_dao_yun]
 api_key = "jian_dao_yun_api_key"
 
+    # 安全限制
+    # 操作表单数据时，先根据 query field 以及推送的表单数据，通过 API 查询匹配表单。如果匹配表单大于限制，则会告警并跳过推送。
+    # 由于 API 并未提供批量删除操作接口，为了避免因匹配到的表单过多，造成阻塞，所以最大限制为 10。
     [jian_dao_yun.safe_limit]
-    create = 1 # 最大10，最小 0
-    update = 1 # 最大10，最小 1
-    delete = 1 # 最大10，最小 0
 
+    # 创建操作
+    # 限制设置为 0 时，只有匹配到 0 条才会创建新表单。
+    # 限制设置为 1 - 10 时，如果匹配表单为 1 ，则执行更新操作；如果匹配表单大于 1 ，则先删除所有匹配表单，然后创建新表单。
+    create = 1 # 最大10，最小 0
+
+    # 更新操作
+    # 匹配表单为 0 时，创建新表单。
+    # 限制设置为 1 时，只有匹配表单为 1 时才会执行更新操作。
+    # 限制设置为 2 - 10 时，则先删除所有匹配表单，然后创建新表单。
+    update = 1 # 最大10，最小 1
+
+    # 删除操作
+    delete = 1 # 最大10，最小 1
+
+# 同步设置
 [sync]
+
+# 部门信息表名
 departments_table = 'JDY_SYNC_DEPARTMENTS'
+
+# 成员信息表名
 users_table = 'JDY_SYNC_USERS'
+
+# 部门成员关系表名
 relationships_table = 'JDY_SYNC_USERS_DEPTS'
 
 [wechat]
