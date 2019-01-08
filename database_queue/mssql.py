@@ -1,6 +1,8 @@
 from sqlalchemy.sql import text
 from sqlalchemy.exc import ProgrammingError
 from .core import Queue, QueueMessage, QueueException
+from log import logger
+from config import MssqlQueueConfig
 
 
 class MssqlQueueMessage(QueueMessage):
@@ -14,10 +16,10 @@ class MssqlQueueMessage(QueueMessage):
 
 
 class MssqlQueue(Queue):
-    def __init__(self, **kwargs):
-        self._service = kwargs['service']
-        self._contract = kwargs['contract']
-        super().__init__(**kwargs)
+    def __init__(self, engine, config: MssqlQueueConfig):
+        self._service = config.service
+        self._contract = config.contract
+        super().__init__(engine=engine, config=config)
 
     @property
     def service(self):
@@ -29,7 +31,7 @@ class MssqlQueue(Queue):
 
     def dequeue_message(self):
         sql = text(
-            f"WAITFOR ( RECEIVE CONVERT(nvarchar(max),message_body) AS 'payload' FROM {self.name}), TIMEOUT 0;"
+            f"WAITFOR ( RECEIVE TOP(1) CONVERT(nvarchar(max),message_body) AS 'payload' FROM {self.name}), TIMEOUT 0;"
         )
         conn = self.engine.connect()
         trans = conn.begin()

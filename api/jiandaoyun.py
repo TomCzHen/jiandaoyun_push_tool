@@ -2,6 +2,7 @@ from requests import Response
 from requests.exceptions import HTTPError
 from ratelimiter import RateLimiter
 from .core import API, APIException
+from config import JdyApiConfig
 
 
 class BadRequestParamsException(APIException):
@@ -62,9 +63,9 @@ API_EXCEPTIONS = {
 
 
 class JianDaoYun(API):
-    def __init__(self, **kwargs):
-        self._api_key = kwargs['api_key']
-        self._safe_limit: dict = kwargs['safe_limit']
+    def __init__(self, config: JdyApiConfig):
+        self._api_key = config.api_key
+        self._safe_limit: dict = config.safe_limit
         super().__init__(scheme='https', host='www.jiandaoyun.com', base_path='api/v1')
 
     @property

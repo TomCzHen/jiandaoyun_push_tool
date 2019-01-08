@@ -46,7 +46,7 @@ api_key = "jian_dao_yun_api_key"
 [sync]
 departments_table = 'JDY_SYNC_DEPARTMENTS'
 users_table = 'JDY_SYNC_USERS'
-relationship_table = 'JDY_SYNC_USERS_DEPTS'
+relationships_table = 'JDY_SYNC_USERS_DEPTS'
 
 [wechat]
 corp_id = "wechat_corp_id"

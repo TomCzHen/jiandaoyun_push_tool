@@ -1,6 +1,7 @@
 from log import logger
 from sqlalchemy import Table, Column, String, Integer, MetaData, ForeignKey
 from marshmallow import Schema, fields
+from config import SyncConfig
 
 
 class DepartmentSchema(Schema):
@@ -16,9 +17,9 @@ class UserSchema(Schema):
 
 
 class Handler:
-    def __init__(self, engine, **kwargs):
+    def __init__(self, engine, config: SyncConfig):
         self._engine = engine
-        self._config = kwargs
+        self._config = config
         self.__metadata = MetaData()
         self._users_schema = UserSchema(many=True)
         self._departments_schema = DepartmentSchema(many=True)
@@ -91,7 +92,7 @@ class Handler:
 
     def _init_users_table(self):
         table = Table(
-            self.config["users_table"],
+            self.config.users_table,
             self.__metadata,
             Column('id', String(32), primary_key=True),
             Column('name', String(32), index=True),
@@ -102,7 +103,7 @@ class Handler:
 
     def _init_departments_table(self):
         table = Table(
-            self.config["departments_table"],
+            self.config.departments_table,
             self.__metadata,
             Column('id', String(32), primary_key=True),
             Column('parent_id', String(32), index=True),
@@ -113,11 +114,11 @@ class Handler:
 
     def _init_relationships_table(self):
         table = Table(
-            self.config["relationships_table"],
+            self.config.relationships_table,
             self.__metadata,
             Column('id', Integer, autoincrement=True, primary_key=True),
-            Column('department_id', String(32), ForeignKey(f'{self.config["departments_table"]}.id')),
-            Column('user_id', String(32), ForeignKey(f'{self.config["users_table"]}.id')),
+            Column('department_id', String(32), ForeignKey(f'{self.config.departments_table}.id')),
+            Column('user_id', String(32), ForeignKey(f'{self.config.users_table}.id')),
         )
         table.create(self._engine, checkfirst=True)
         return table

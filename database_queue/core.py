@@ -1,9 +1,12 @@
+from config import QueueConfig
+
+
 class Queue:
 
-    def __init__(self, **kwargs):
-        self._name = kwargs['name']
-        self._message_type = kwargs['message_type']
-        self._engine = kwargs['engine']
+    def __init__(self, engine, config: QueueConfig):
+        self._engine = engine
+        self._name = config.name
+        self._message_type = config.message_type
 
     @property
     def name(self):

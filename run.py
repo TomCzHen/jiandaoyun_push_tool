@@ -4,7 +4,7 @@ from logging.handlers import TimedRotatingFileHandler
 from log import logger, formatter
 from pathlib import Path
 from sqlalchemy import create_engine
-from config import BASE_DIR, db_driver, config_title, log_config, database_config, api_config, queue_config, sync_config
+from config import BASE_DIR, db_driver, config_title, log_config, database_config, jdy_config, queue_config, sync_config
 from api import JianDaoYun
 from database_queue import Queue, OracleQueue, MssqlQueue
 from queue_consumer import Consumer as QueueConsumer
@@ -12,40 +12,25 @@ from handlers import ContactsHandler
 from args import args as run_args
 
 
-def init_db_engine(config: dict):
+def init_db_engine(config):
     logger.info('初始化数据库连接')
-    uri_formats = {
-        'oracle': 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}',
-        'mssql': 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'
-    }
-
-    _config: dict = config[db_driver]
-    logger.debug(f'数据库配置 : {_config}')
-    if db_driver.lower() == 'oracle':
-        os.environ['NLS_LANG'] = _config.get('nls_lang')
-        os.environ['LD_LIBRARY_PATH'] = _config.get('ld_library_path')
-
-    uri = uri_formats[db_driver.lower()].format(**_config)
-    engine = create_engine(uri)
+    engine = create_engine(config.uri)
     return engine
 
 
-def init_queue(config: dict, engine) -> Queue:
+def init_queue(config, engine) -> Queue:
     logger.info('初始化队列')
     _queues = {
         'mssql': MssqlQueue,
         'oracle': OracleQueue
     }
-    _config = config[db_driver]
-    logger.debug(f'队列配置 : {_config}')
-    queue = _queues[db_driver.lower()](engine=engine, **_config)
+    queue = _queues[db_driver.lower()](engine=engine, config=config)
     return queue
 
 
-def init_api(config: dict) -> JianDaoYun:
-    logger.debug(f'简道云 API 配置 : {config}')
+def init_jdy_api(config) -> JianDaoYun:
     logger.info('初始化简道云 API')
-    api = JianDaoYun(**config)
+    api = JianDaoYun(config)
     return api
 
 
@@ -70,7 +55,7 @@ if __name__ == '__main__':
         init_logger(log_config)
         db_engine = init_db_engine(database_config)
         db_queue = init_queue(queue_config, db_engine)
-        jdy_api = init_api(api_config)
+        jdy_api = init_jdy_api(jdy_config)
     except Exception as e:
         logger.error('初始化错误，请检查配置。', exc_info=True)
         raise e
@@ -91,7 +76,7 @@ if __name__ == '__main__':
             users_response = jdy_api.fetch_member_list(dept_id='root', has_child=True)
             users = users_response.json()['users']
 
-            contacts_handler = ContactsHandler(engine=db_engine, **sync_config)
+            contacts_handler = ContactsHandler(engine=db_engine, config=sync_config)
             contacts_handler.handle(users=users, departments=departments)
     except Exception as e:
         logger.error('同步程序因未知异常退出。', exc_info=True)
