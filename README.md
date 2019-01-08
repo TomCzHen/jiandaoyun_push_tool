@@ -33,15 +33,15 @@
 
 复制 `config.example.toml` 为 `config.toml`，查看配置文件注释进行配置。
 
-* 守护进程运行
+### 守护进程运行
 
-Windows 部署 SQL Server 推荐使用代理作业随代理启动，或者使用 [NSSM - the Non-Sucking Service Manager](https://nssm.cc/) 添加为系统服务运行。
+Windows 部署推荐使用 SQL Server 代理作业随代理启动，或者使用 [NSSM - the Non-Sucking Service Manager](https://nssm.cc/) 添加为系统服务运行。
 
 ```bash
 python run.py --daemon
 ```
 
-* 通讯同步
+### 部门成员信息同步
 
 使用系统计划任务定时运行。
 
