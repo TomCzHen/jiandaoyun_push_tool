@@ -3,30 +3,20 @@ import os
 from unittest import TestCase
 from handlers import ContactsHandler
 from sqlalchemy import create_engine
-from config import database_config, sync_config, db_driver
+from config import database_config, sync_config, SyncConfig
 
 
 class TestSyncHandler(TestCase):
     def setUp(self):
-        uri_formats = {
-            'oracle': 'oracle+cx_oracle://{username}:{password}@{host}:{port}/{database_name}',
-            'mssql': 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'
-        }
-
-        _config: dict = database_config[db_driver]
-        if db_driver.lower() == 'oracle':
-            os.environ['NLS_LANG'] = _config.get('nls_lang')
-            os.environ['LD_LIBRARY_PATH'] = _config.get('ld_library_path')
-
-        uri = uri_formats[db_driver.lower()].format(**_config)
-        self._db_engine = create_engine(uri)
+        self._db_engine = create_engine(database_config.uri)
 
         _config = {
-            "users_table": f"t_{sync_config['users_table']}",
-            "departments_table": f"t_{sync_config['departments_table']}",
-            "relationships_table": f"t_{sync_config['relationships_table']}",
+            "users_table": f"t_{sync_config.users_table}",
+            "departments_table": f"t_{sync_config.departments_table}",
+            "relationships_table": f"t_{sync_config.relationships_table}",
         }
-        self.handler = ContactsHandler(engine=self._db_engine, **_config)
+        test_sync_config = SyncConfig(**_config)
+        self.handler = ContactsHandler(engine=self._db_engine, config=test_sync_config)
 
     def tearDown(self):
         self.handler.relationships_table.drop(self._db_engine, checkfirst=True)

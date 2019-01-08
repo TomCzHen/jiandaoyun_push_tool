@@ -28,7 +28,7 @@ class DatabaseConfig(Config):
 
     @property
     def params(self):
-        return '&'.join(['?'.join(_) for _ in self._params.items()])
+        return '&'.join(['='.join(_) for _ in self._params.items()])
 
     @property
     def uri(self):
