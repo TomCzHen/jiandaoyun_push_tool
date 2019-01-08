@@ -67,7 +67,7 @@ class MssqlQueue(Queue):
         trans = conn.begin()
         try:
             conn.execute(sql)
-        except ProgrammingError as e:
+        except Exception as e:
             trans.rollback()
             conn.close()
             logger.error(e, exc_info=True)

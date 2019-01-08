@@ -1,34 +1,31 @@
-import toml
 from unittest import TestCase
 from sqlalchemy import create_engine, text
 from database_queue import MssqlQueue
-from config import database_config, queue_config
+from config import database_config, queue_config, MssqlQueueConfig
 
 
 class TestMssqlQueue(TestCase):
     def setUp(self):
-        _db_config = database_config['mssql']
-        _queue_config = queue_config['mssql']
-        uri = 'mssql+pyodbc://{username}:{password}@{host}:{port}/{database_name}?driver=ODBC Driver 17 for SQL Server'.format(
-            **_db_config
-        )
-        self.db_engine = create_engine(uri)
-        self.queue_name = f't_{_queue_config["name"]}'
-        self.service_name = f't_{_queue_config["service"]}'
-        self.contract_name = f't_{_queue_config["contract"]}'
-        self.message_type_name = f't_{_queue_config["message_type"]}'
+        _config = {
+            'name': f't_{queue_config.name}',
+            'message_type': f't_{queue_config.message_type}',
+            'service': f't_{queue_config.service}',
+            'contract': f't_{queue_config.contract}'
+        }
+        self.config = MssqlQueueConfig(**_config)
+        self.db_engine = create_engine(database_config.uri)
 
         sql_create_message_type = text(
-            f"CREATE MESSAGE TYPE [{self.message_type_name}] VALIDATION = NONE;"
+            f"CREATE MESSAGE TYPE [{self.config.message_type}] VALIDATION = NONE;"
         )
         sql_create_contract = text(
-            f"CREATE CONTRACT [{self.contract_name}] ([{self.message_type_name}] SENT BY INITIATOR);"
+            f"CREATE CONTRACT [{self.config.contract}] ([{self.config.message_type}] SENT BY INITIATOR);"
         )
         sql_create_queue = text(
-            f"CREATE QUEUE {self.queue_name} WITH STATUS = ON,RETENTION = OFF,POISON_MESSAGE_HANDLING (STATUS = OFF);"
+            f"CREATE QUEUE {self.config.name} WITH STATUS = ON,RETENTION = OFF,POISON_MESSAGE_HANDLING (STATUS = OFF);"
         )
         sql_create_service = text(
-            f"CREATE SERVICE [{self.service_name}] ON QUEUE {self.queue_name}([{self.contract_name}]);"
+            f"CREATE SERVICE [{self.config.service}] ON QUEUE {self.config.name}([{self.config.contract}]);"
         )
         conn = self.db_engine.connect()
         trans = conn.begin()
@@ -47,16 +44,16 @@ class TestMssqlQueue(TestCase):
 
     def tearDown(self):
         sql_drop_message_type = text(
-            f"IF EXISTS (SELECT * FROM sys.service_message_types WHERE name = N'{self.message_type_name}') DROP MESSAGE TYPE [{self.message_type_name}]"
+            f"IF EXISTS (SELECT * FROM sys.service_message_types WHERE name = N'{self.config.message_type}') DROP MESSAGE TYPE [{self.config.message_type}]"
         )
         sql_drop_contract = text(
-            f"IF EXISTS (SELECT * FROM sys.service_contracts WHERE name = N'{self.contract_name}') DROP CONTRACT [{self.contract_name}]"
+            f"IF EXISTS (SELECT * FROM sys.service_contracts WHERE name = N'{self.config.contract}') DROP CONTRACT [{self.config.contract}]"
         )
         sql_drop_queue = text(
-            f"IF EXISTS (SELECT * FROM sys.service_queues WHERE name = N'{self.queue_name}') DROP QUEUE [dbo].[{self.queue_name}]"
+            f"IF EXISTS (SELECT * FROM sys.service_queues WHERE name = N'{self.config.name}') DROP QUEUE [dbo].[{self.config.name}]"
         )
         sql_drop_service = text(
-            f"IF EXISTS (SELECT * FROM sys.services WHERE name = N'{self.service_name}') DROP SERVICE [{self.service_name}]"
+            f"IF EXISTS (SELECT * FROM sys.services WHERE name = N'{self.config.service}') DROP SERVICE [{self.config.service}]"
         )
         conn = self.db_engine.connect()
         trans = conn.begin()
@@ -74,15 +71,10 @@ class TestMssqlQueue(TestCase):
             conn.close()
 
     def test_dequeue_message(self):
-        _config = {
-            "name": self.queue_name,
-            "service": self.service_name,
-            "contract": self.contract_name,
-            "message_type": self.message_type_name
-        }
+
         queue = MssqlQueue(
             engine=self.db_engine,
-            **_config)
+            config=self.config)
         queue.enqueue_message('queue message test from python 测试')
         message = queue.dequeue_message()
         self.assertEqual(message.payload, 'queue message test from python 测试')
