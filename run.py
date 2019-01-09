@@ -1,15 +1,16 @@
 import logging
-import os
 from logging.handlers import TimedRotatingFileHandler
 from log import logger, formatter
 from pathlib import Path
 from sqlalchemy import create_engine
-from config import BASE_DIR, db_driver, config_title, log_config, database_config, jdy_config, queue_config, sync_config
+from config import BASE_DIR, db_driver, config_title, log_config, database_config, jdy_config, queue_config, \
+    sync_config, wechat_config
 from api import JianDaoYun
 from database_queue import Queue, OracleQueue, MssqlQueue
 from queue_consumer import Consumer as QueueConsumer
 from handlers import ContactsHandler
 from args import args as run_args
+from notifications.channels import WeChatChannel
 
 
 def init_queue(config, engine) -> Queue:
@@ -38,19 +39,25 @@ def init_logger(config):
     logger.info(f'加载配置 >>> {config_title} <<<,数据库类型 >>> {db_driver} <<<')
 
 
+def init_channel(config):
+    channel = WeChatChannel(config)
+    return channel
+
+
 if __name__ == '__main__':
     try:
         init_logger(log_config)
         db_engine = create_engine(database_config.uri)
         db_queue = init_queue(queue_config, db_engine)
         jdy_api = JianDaoYun(jdy_config)
+        wechat_channel = init_channel(wechat_config)
     except Exception as e:
         logger.error('初始化错误，请检查配置。', exc_info=True)
         raise e
 
     try:
         if run_args.daemon:
-            queue_consumer = QueueConsumer(queue=db_queue, api=jdy_api)
+            queue_consumer = QueueConsumer(queue=db_queue, api=jdy_api, channel=wechat_channel)
             queue_consumer.start()
     except Exception as e:
         logger.error('消费者程序因未知异常退出。')

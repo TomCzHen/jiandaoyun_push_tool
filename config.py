@@ -79,6 +79,8 @@ SyncConfig = namedtuple('SyncConfig', ['departments_table', 'users_table', 'rela
 
 JdyApiConfig = namedtuple('JdyApiConfig', ['api_key', 'safe_limit'])
 
+WeChatConfig = namedtuple('WeChatConfig', ['corp_id', 'agent_id', 'agent_secret', 'party_id'])
+
 
 def init_config():
     try:
@@ -119,6 +121,7 @@ try:
     db_driver = configs['db_driver'].lower()
     config_title = configs['title']
     jdy_config = JdyApiConfig(**configs['jian_dao_yun'])
+    wechat_config = WeChatConfig(**configs['wechat'])
     database_config = build_database_config(configs, db_driver)
     queue_config = build_queue_config(configs, db_driver)
     log_config = LogConfig(**configs['log'])

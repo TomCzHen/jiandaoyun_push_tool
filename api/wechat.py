@@ -1,5 +1,7 @@
 from .core import API, APIException
 from ratelimiter import RateLimiter
+from config import WeChatConfig
+from cache import api_cache as cache
 
 
 class SystemBusyException(APIException):
@@ -85,14 +87,14 @@ class WeChat(API):
     def get_access_token(self, secret):
         method = 'GET'
         params = {"corpid": self.corp_id, "corpsecret": secret}
-        path = '/gettoken'
+        path = 'gettoken'
         response = self._request(method=method, path=path, params=params)
         return response
 
     def upload_media(self, access_token, payload, file_name, media_type='file'):
         method = 'POST'
         params = {'access_token': access_token, 'type': media_type}
-        path = '/media/upload'
+        path = 'media/upload'
         media_file = {'file': (file_name, payload)}
         response = self._request(method=method, path=path, params=params, files=media_file)
         return response
@@ -100,7 +102,7 @@ class WeChat(API):
     def send_media_message(self, access_token, media_id, party_id, agent_id):
         method = 'POST'
         params = {'access_token': access_token}
-        path = '/message/send'
+        path = 'message/send'
         data = {
             "toparty": party_id,
             "msgtype": "file",
@@ -116,7 +118,7 @@ class WeChat(API):
     def send_text_message(self, access_token, payload: str, party_id, agent_id):
         method = 'POST'
         params = {'access_token': access_token}
-        path = '/message/send'
+        path = 'message/send'
         data = {
             "toparty": party_id,
             "msgtype": "text",
@@ -131,15 +133,25 @@ class WeChat(API):
     @RateLimiter(max_calls=5, period=1)
     def _request(self, method: str = 'GET', headers: dict = None, path: str = '', params=None, data: dict = None,
                  files=None, timeout=10):
-        super()._request(method=method, headers=headers, path=path, params=params, data=data, files=files,
-                         timeout=timeout)
+        response = super()._request(
+            method=method,
+            headers=headers,
+            path=path,
+            params=params,
+            data=data,
+            files=files,
+            timeout=timeout)
+        return response
 
 
-class WeChatAgent(WeChat):
-    def __init__(self, corp_id, agent_id, agent_secret):
-        self._agent_id = agent_id
-        self._agent_secret = agent_secret
-        super().__init__(corp_id)
+class WeChatAgent:
+    _cache = cache
+
+    def __init__(self, config: WeChatConfig):
+        self._agent_id = config.agent_id
+        self._agent_secret = config.agent_secret
+        self._party_id = config.party_id
+        self._api = WeChat(config.corp_id)
 
     @property
     def agent_id(self):
@@ -151,11 +163,39 @@ class WeChatAgent(WeChat):
 
     @property
     def access_token(self):
-        key = f'{self.corp_id}-{self.agent_id}-token'
-        token = cache.get(key)
+        key = f'{self._api.corp_id}-{self.agent_id}-token'
+        token = self._cache.get(key)
         if not token:
-            response = self.get_access_token(self.agent_secret)
+            response = self._api.get_access_token(self.agent_secret)
             token = response.json().get('access_token')
             expire = response.json().get('expires_in') - 30
-            cache.set(key=key, value=token, expire=expire)
+            self._cache.set(key=key, value=token, expire=expire)
         return token
+
+    def send_media_message(self, payload):
+        media_id = self.upload_media(
+            payload=payload
+        )
+        self._api.send_media_message(
+            access_token=self.access_token,
+            media_id=media_id,
+            party_id=self._party_id,
+            agent_id=self.agent_id
+        )
+
+    def send_text_message(self, payload):
+        self._api.send_text_message(
+            access_token=self.access_token,
+            payload=payload,
+            party_id=self._party_id,
+            agent_id=self.agent_id
+        )
+
+    def upload_media(self, payload):
+        response = self._api.upload_media(
+            access_token=self.access_token,
+            payload=payload,
+            file_name='message_payload.txt'
+        )
+        media_id = response.json().get('media_id')
+        return media_id
