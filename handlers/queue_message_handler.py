@@ -3,7 +3,7 @@ import hashlib
 from formdata import FormData
 from api import JianDaoYun
 from handlers.exceptions import PayloadDecodeError, PayloadKeyError, SafeDataLimitException
-
+from database_queue import QueueMessage
 from cache import widgets_cache as cache
 
 
@@ -82,9 +82,9 @@ class Handler:
             raise SafeDataLimitException
         return form_data_list
 
-    def _init_form_data(self, message) -> FormData:
+    def _init_form_data(self, message: QueueMessage) -> FormData:
         try:
-            payload = json.loads(str(message))
+            payload = json.loads(message.payload)
             widgets = self._get_from_data_widgets(payload)
             form_data = FormData(widgets=widgets, payload=payload)
         except json.decoder.JSONDecodeError as e:
