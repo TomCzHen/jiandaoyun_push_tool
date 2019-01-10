@@ -30,6 +30,7 @@
 1. 安装 Python 3.6 并使用 `pip install pipenv` 命令安装 `pipenv` 包
 2. 下载或 clone 代码到本地
 3. 在项目根目录执行 `pipenv install` 安装依赖
+4. 复制 `config.example.toml` 为 `config.toml`，查看配置文件注释进行配置。
 
 ## 使用说明
 
@@ -38,8 +39,6 @@
 * 表单创建人固定为组织名称
 * 网页端支持的约束检查在 API 无效（例如：唯一、必填等）
 * 部分表单控件 API 不支持
-
-复制 `config.example.toml` 为 `config.toml`，查看配置文件注释进行配置。
 
 ### 守护进程运行
 
