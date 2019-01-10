@@ -148,6 +148,7 @@ class WeChatAgent:
     _cache = cache
 
     def __init__(self, config: WeChatConfig):
+        self.enable = config.enable
         self._agent_id = config.agent_id
         self._agent_secret = config.agent_secret
         self._party_id = config.party_id

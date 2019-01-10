@@ -93,9 +93,15 @@ users_table = 'JDY_SYNC_USERS'
 # 部门成员关系表名
 relationships_table = 'JDY_SYNC_USERS_DEPTS'
 
+# 微信通知
 [wechat]
+
+# 是否开启 true|false
+enable = false
+
 corp_id = "wechat_corp_id"
 agent_id = 999999
 agent_secret = "wechat_agent_secret"
+
 # 接收推送的部门 id
 party_id = 999

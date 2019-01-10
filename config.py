@@ -79,7 +79,7 @@ SyncConfig = namedtuple('SyncConfig', ['departments_table', 'users_table', 'rela
 
 JdyApiConfig = namedtuple('JdyApiConfig', ['api_key', 'safe_limit'])
 
-WeChatConfig = namedtuple('WeChatConfig', ['corp_id', 'agent_id', 'agent_secret', 'party_id'])
+WeChatConfig = namedtuple('WeChatConfig', ['enable', 'corp_id', 'agent_id', 'agent_secret', 'party_id'])
 
 
 def init_config():
