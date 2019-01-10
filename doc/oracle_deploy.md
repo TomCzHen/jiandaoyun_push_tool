@@ -2,6 +2,10 @@
 
 ## 运行环境
 
+需要手动安装客户端连接驱动，请参考官方文档进行安装。
+
+[ODPI-C Installation](https://oracle.github.io/odpi/doc/installation.html)
+
 ## 配置数据库
 
 注意：根据需要修改名称，配置文件中名字保持一致
