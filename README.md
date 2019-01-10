@@ -23,6 +23,14 @@
 * [Oracle](/doc/oracle_deploy.md)
 * [SQL Server](/doc/mssql_deploy.md)
 
+## 部署
+
+注意：请先参考配置数据库说明，安装好需要的数据库驱动
+
+1. 安装 Python 3.6 并使用 `pip install pipenv` 命令安装 `pipenv` 包
+2. 下载或 clone 代码到本地
+3. 在项目根目录执行 `pipenv install` 安装依赖
+
 ## 使用说明
 
 通过 API 操作表单有以下限制：
