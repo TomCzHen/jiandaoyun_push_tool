@@ -2,6 +2,7 @@ import hashlib
 from api.wechat import WeChatAgent
 from config import WeChatConfig
 from cache import notice_cache as cache
+from log import logger
 
 
 class Notification:
@@ -50,6 +51,9 @@ class WeChatChannel(Channel):
     def send(self, notification: Notification):
         if self.cache.get('last_notification_identity') != notification.identity:
             self.cache.set(key='last_notification_identity', value=notification.identity, expire=30)
-            if notification.payload:
-                self.agent.send_media_message(notification.payload)
-            self.agent.send_text_message(notification.message)
+            try:
+                if notification.payload:
+                    self.agent.send_media_message(notification.payload)
+                self.agent.send_text_message(notification.message)
+            except Exception as e:
+                logger.warning(f'发送通知失败 : {e}', exc_info=True)
