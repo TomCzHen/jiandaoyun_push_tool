@@ -5,13 +5,13 @@ name = "pypi"
 
 [packages]
 toml = "*"
-sqlalchemy = "*"
-diskcache = "*"
-cx-oracle = "*"
-requests = "*"
-ratelimiter = "*"
-marshmallow = "*"
-pyodbc = "*"
+sqlalchemy = "~=1.3"
+diskcache = "~=3.1"
+cx-oracle = "~=7.1"
+requests = "~=2.21"
+ratelimiter = "~=1.2"
+marshmallow = "~=2.19"
+pyodbc = "~=4.0"
 
 [dev-packages]
 pyinstaller = "*"
