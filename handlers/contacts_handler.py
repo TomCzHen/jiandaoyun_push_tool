@@ -48,17 +48,18 @@ class Handler:
     def relationships_table(self):
         return self._relationships_table
 
-    def handle(self, users, departments):
-
+    def handle(self, users: list, departments: list):
         users_data = self.users_schema.load(users).data
         departments_data = self._departments_schema.load(departments).data
         relationships_data = []
+
         for user in users:
             for department in user['departments']:
                 data = dict()
                 data['department_id'] = department
                 data['user_id'] = user['_id']
                 relationships_data.append(data)
+
         try:
             self._sync_to_database(users=users_data, departments=departments_data, relationships=relationships_data)
         except Exception as error:
@@ -71,7 +72,7 @@ class Handler:
         self._users_table = self._init_users_table()
         self._departments_table = self._init_departments_table()
         self._relationships_table = self._init_relationships_table()
-
+        departments.append({'id': 'root', 'parent_id': None, 'name': self.config.root_department_name})
         conn = self._engine.connect()
         trans = conn.begin()
         try:

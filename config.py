@@ -75,7 +75,8 @@ class OracleQueueConfig(QueueConfig):
 
 LogConfig = namedtuple('LogConfig', ['debug', 'file_name'])
 
-SyncConfig = namedtuple('SyncConfig', ['departments_table', 'users_table', 'relationships_table'])
+SyncConfig = namedtuple('SyncConfig',
+                        ['departments_table', 'users_table', 'relationships_table', 'root_department_name'])
 
 JdyApiConfig = namedtuple('JdyApiConfig', ['api_key', 'safe_limit'])
 
